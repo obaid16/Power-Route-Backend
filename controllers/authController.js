@@ -47,7 +47,12 @@ const signup = catchAsync(async (req, res) => {
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
-  await sendOtpEmail(email, otp);
+  try {
+    await sendOtpEmail(email, otp);
+  } catch (err) {
+    console.error('SMTP ERROR (Legacy): Failed to send OTP email to', email, ':', err);
+    throw new AppError('Verification email could not be sent. Please check your SMTP configuration.', 500);
+  }
 
   res.status(201).json({
     status: 'success',
@@ -98,7 +103,12 @@ const resendOtp = catchAsync(async (req, res) => {
   user.emailOtpExpires = new Date(Date.now() + OTP_TTL_MS);
   await user.save({ validateBeforeSave: false });
 
-  await sendOtpEmail(email, otp);
+  try {
+    await sendOtpEmail(email, otp);
+  } catch (err) {
+    console.error('SMTP ERROR (Legacy): Failed to resend OTP email to', email, ':', err);
+    throw new AppError('Verification email could not be sent. Please check your SMTP configuration.', 500);
+  }
 
   res.status(200).json({
     status: 'success',
